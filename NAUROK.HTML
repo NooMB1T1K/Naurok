@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>На Урок</title>
+    <link rel="icon" href="https://naurok.com.ua/favicon.ico" type="image/x-icon">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            background: #fff;
+        }
+
+        /* ===== IFRAME — весь екран ===== */
+        #frame {
+            width: 100vw;
+            height: 100vh;
+            border: none;
+            display: block;
+        }
+
+        /* ===== ТРИ КНОПКИ — маленькі крапки зліва зверху ===== */
+        .cheat-dots {
+            position: fixed;
+            top: 8px;
+            left: 8px;
+            z-index: 999999;
+            display: flex;
+            gap: 5px;
+        }
+
+        .dot-btn {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            opacity: 0.35;
+            transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+        }
+
+        .dot-btn:hover {
+            opacity: 0.85;
+            transform: scale(1.4);
+        }
+
+        .dot-btn.active {
+            opacity: 1;
+            transform: scale(1.3);
+        }
+
+        /* Кнопка 1 — Підказки (зелена) */
+        .dot-1 {
+            background: #2ecc71;
+        }
+        .dot-1.active {
+            box-shadow: 0 0 8px rgba(46, 204, 113, 0.7);
+        }
+
+        /* Кнопка 2 — AI помічник (фіолетова) */
+        .dot-2 {
+            background: #9b59b6;
+        }
+        .dot-2.active {
+            box-shadow: 0 0 8px rgba(155, 89, 182, 0.7);
+        }
+
+        /* Кнопка 3 — Оцінка (жовта) */
+        .dot-3 {
+            background: #f39c12;
+        }
+        .dot-3.active {
+            box-shadow: 0 0 8px rgba(243, 156, 18, 0.7);
+        }
+
+        /* ===== AI ПАНЕЛЬ — тонка бічна ===== */
+        #ai-panel {
+            position: fixed;
+            right: -360px;
+            top: 0;
+            width: 340px;
+            height: 100vh;
+            background: #fff;
+            box-shadow: -3px 0 20px rgba(0,0,0,0.12);
+            z-index: 999998;
+            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        #ai-panel.open {
+            right: 0;
+        }
+
+        .ai-head {
+            padding: 14px 16px;
+            background: linear-gradient(135deg, #8e44ad, #9b59b6);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .ai-x {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: #fff;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .ai-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #fafafa;
+        }
+
+        .ai-body::-webkit-scrollbar { width: 4px; }
+        .ai-body::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+
+        .msg {
+            max-width: 88%;
+            padding: 9px 13px;
+            border-radius: 12px;
+            font-size: 13px;
+            line-height: 1.5;
+            animation: fadeUp 0.25s ease;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .msg.bot {
+            background: #fff;
+            color: #333;
+            align-self: flex-start;
+            border: 1px solid #eee;
+            border-bottom-left-radius: 3px;
+        }
+        .msg.user {
+            background: #8e44ad;
+            color: #fff;
+            align-self: flex-end;
+            border-bottom-right-radius: 3px;
+        }
+
+        .ai-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            padding: 8px 12px;
+            border-top: 1px solid #f0f0f0;
+            background: #fff;
+            flex-shrink: 0;
+        }
+
+        .chip {
+            padding: 4px 10px;
+            background: #f3e8ff;
+            color: #8e44ad;
+            border: 1px solid #e4d0f5;
+            border-radius: 16px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .chip:hover {
+            background: #8e44ad;
+            color: #fff;
+        }
+
+        .ai-input-row {
+            padding: 10px 12px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 6px;
+            background: #fff;
+            flex-shrink: 0;
+        }
+
+        .ai-input-row input {
+            flex: 1;
+            padding: 9px 12px;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .ai-input-row input:focus {
+            border-color: #9b59b6;
+        }
+
+        .ai-send {
+            padding: 9px 14px;
+            background: #8e44ad;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        /* ===== GRADE MODAL ===== */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 1000000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(3px);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: #fff;
+            border-radius: 14px;
+            padding: 28px;
+            width: 350px;
+            max-width: 90vw;
+            box-shadow: 0 16px 50px rgba(0,0,0,0.25);
+            animation: modalPop 0.25s ease;
+        }
+
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.92); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal h3 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        .modal p {
+            color: #888;
+            font-size: 12px;
+            margin-bottom: 18px;
+            line-height: 1.5;
+        }
+
+        .grades-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            margin-bottom: 18px;
+        }
+
+        .g-btn {
+            padding: 10px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            background: #fff;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+            color: #333;
+        }
+
+        .g-btn:hover {
+            border-color: #9b59b6;
+            color: #9b59b6;
+        }
+
+        .g-btn.sel {
+            border-color: #8e44ad;
+            background: #8e44ad;
+            color: #fff;
+        }
+
+        .slider-area {
+            margin-bottom: 18px;
+        }
+
+        .slider-area label {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .slider-area input[type="range"] {
+            width: 100%;
+            accent-color: #8e44ad;
+            margin-top: 6px;
+        }
+
+        .slider-val {
+            text-align: center;
+            font-size: 22px;
+            font-weight: 700;
+            color: #8e44ad;
+            margin-top: 2px;
+        }
+
+        .modal-btns {
+            display: flex;
+            gap: 8px;
+        }
+        .modal-btns button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .m-cancel {
+            background: #f1f1f1;
+            color: #888;
+        }
+
+        .m-apply {
+            background: #8e44ad;
+            color: #fff;
+        }
+
+        /* ===== TOAST ===== */
+        #toast {
+            position: fixed;
+            bottom: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 22px;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 12.5px;
+            font-weight: 600;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            z-index: 1100000;
+            transition: bottom 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+            white-space: nowrap;
+        }
+
+        #toast.show { bottom: 24px; }
+        #toast.green { background: #27ae60; }
+        #toast.purple { background: #8e44ad; }
+        #toast.orange { background: #e67e22; }
+    </style>
+</head>
+<body>
+
+<!-- Три крапки-кнопки -->
+<div class="cheat-dots">
+    <button class="dot-btn dot-1" id="d1" title=" "></button>
+    <button class="dot-btn dot-2" id="d2" title=" "></button>
+    <button class="dot-btn dot-3" id="d3" title=" "></button>
+</div>
+
+<!-- Сайт наурок — весь екран -->
+<iframe id="frame" src="https://naurok.com.ua/test/join"></iframe>
+
+<!-- AI Panel -->
+<div id="ai-panel">
+    <div class="ai-head">
+        <span>🤖 Помічник</span>
+        <button class="ai-x" id="ai-close">✕</button>
+    </div>
+    <div class="ai-body" id="ai-body">
+        <div class="msg bot">Привіт! Скопіюй сюди питання з тесту — допоможу знайти відповідь 💡</div>
+    </div>
+    <div class="ai-chips">
+        <div class="chip" data-q="Яка правильна відповідь?">✅ Відповідь</div>
+        <div class="chip" data-q="Поясни це питання">💭 Поясни</div>
+        <div class="chip" data-q="Розв'яжи задачу">🧮 Розв'яжи</div>
+        <div class="chip" data-q="Як це працює?">⚙️ Як працює</div>
+    </div>
+    <div class="ai-input-row">
+        <input type="text" id="ai-in" placeholder="Питання..." />
+        <button class="ai-send" id="ai-send">➤</button>
+    </div>
+</div>
+
+<!-- Grade Modal -->
+<div class="overlay" id="ov">
+    <div class="modal">
+        <h3>📝 Бажана оцінка</h3>
+        <p>Система підлаштує кількість правильних відповідей під обрану оцінку. Обирайте 9-10 для натуральності.</p>
+        <div class="grades-grid" id="gg"></div>
+        <div class="slider-area">
+            <label>Точний %</label>
+            <input type="range" min="20" max="100" value="83" id="sl" />
+            <div class="slider-val" id="sv">83%</div>
+        </div>
+        <div class="modal-btns">
+            <button class="m-cancel" id="m-cancel">Скасувати</button>
+            <button class="m-apply" id="m-apply">Застосувати</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+(function() {
+    'use strict';
+
+    // ==== STATE ====
+    let hintsOn = false;
+    let aiOpen = false;
+    let gradePercent = 83;
+    let selectedGrade = null;
+
+    // ==== ELEMENTS ====
+    const frame = document.getElementById('frame');
+    const d1 = document.getElementById('d1');
+    const d2 = document.getElementById('d2');
+    const d3 = document.getElementById('d3');
+    const aiPanel = document.getElementById('ai-panel');
+    const aiBody = document.getElementById('ai-body');
+    const aiIn = document.getElementById('ai-in');
+    const overlay = document.getElementById('ov');
+    const slider = document.getElementById('sl');
+    const sliderVal = document.getElementById('sv');
+    // ==== GRADES GRID ====
+    const gg = document.getElementById('gg');
+    [5,6,7,8,9,10,11,12].forEach(g => {
+        const b = document.createElement('button');
+        b.className = 'g-btn';
+        b.textContent = g;
+        b.onclick = () => {
+            document.querySelectorAll('.g-btn').forEach(x => x.classList.remove('sel'));
+            b.classList.add('sel');
+            selectedGrade = g;
+            const pct = Math.round((g / 12) * 100);
+            slider.value = pct;
+            sliderVal.textContent = pct + '%';
+            gradePercent = pct;
+        };
+        gg.appendChild(b);
+    });
+
+    // ==== DOT 1 — HINTS ====
+    d1.addEventListener('click', () => {
+        hintsOn = !hintsOn;
+        d1.classList.toggle('active', hintsOn);
+
+        if (hintsOn) {
+            toast('Підказки увімкнено', 'green');
+            injectHints();
+        } else {
+            toast('Підказки вимкнено', 'green');
+            removeHints();
+        }
+    });
+
+    // ==== DOT 2 — AI ====
+    d2.addEventListener('click', () => {
+        aiOpen = !aiOpen;
+        d2.classList.toggle('active', aiOpen);
+        aiPanel.classList.toggle('open', aiOpen);
+        if (aiOpen) aiIn.focus();
+    });
+
+    document.getElementById('ai-close').addEventListener('click', () => {
+        aiOpen = false;
+        d2.classList.remove('active');
+        aiPanel.classList.remove('open');
+    });
+
+    // ==== DOT 3 — GRADE ====
+    d3.addEventListener('click', () => {
+        overlay.classList.add('show');
+        d3.classList.add('active');
+    });
+
+    document.getElementById('m-cancel').addEventListener('click', () => {
+        overlay.classList.remove('show');
+        d3.classList.remove('active');
+    });
+
+    document.getElementById('m-apply').addEventListener('click', () => {
+        overlay.classList.remove('show');
+        gradePercent = parseInt(slider.value);
+        toast('Оцінка: ' + gradePercent + '% правильних', 'orange');
+        applyGrade(gradePercent);
+        setTimeout(() => d3.classList.remove('active'), 1500);
+    });
+
+    slider.addEventListener('input', () => {
+        sliderVal.textContent = slider.value + '%';
+        gradePercent = parseInt(slider.value);
+        document.querySelectorAll('.g-btn').forEach(x => x.classList.remove('sel'));
+    });
+
+    // ==== AI CHAT ====
+    document.getElementById('ai-send').addEventListener('click', sendMsg);
+    aiIn.addEventListener('keypress', e => { if (e.key === 'Enter') sendMsg(); });
+
+    document.querySelectorAll('.chip').forEach(c => {
+        c.addEventListener('click', () => {
+            aiIn.value = c.dataset.q;
+            sendMsg();
+        });
+    });
+
+    function sendMsg() {
+        const txt = aiIn.value.trim();
+        if (!txt) return;
+        addMsg(txt, 'user');
+        aiIn.value = '';
+        const tid = addMsg('⏳ Думаю...', 'bot');
+        setTimeout(() => {
+            const el = document.getElementById(tid);
+            if (el) el.innerHTML = aiResponse(txt);
+            aiBody.scrollTop = aiBody.scrollHeight;
+        }, 600 + Math.random() * 900);
+    }
+
+    function addMsg(text, type) {
+        const d = document.createElement('div');
+        d.className = 'msg ' + type;
+        d.innerHTML = text;
+        const id = 'm' + Date.now();
+        d.id = id;
+        aiBody.appendChild(d);
+        aiBody.scrollTop = aiBody.scrollHeight;
+        return id;
+    }
+
+    function aiResponse(q) {
+        const l = q.toLowerCase();
+
+        if (l.includes('відповідь') || l.includes('правильн')) {
+            return '🎯 Натисни зелену крапку (ліворуч зверху) — правильні відповіді будуть підсвічені тонкою рамкою. Також можеш скопіювати сюди текст питання — спробую відповісти!';
+        }
+        if (l.includes('оцінк') || l.includes('бал')) {
+            return '📝 Натисни жовту крапку → обери бажану оцінку → система автоматично обере потрібну кількість правильних/неправильних відповідей.';
+            }
+        if (l.includes('як') && (l.includes('працю') || l.includes('робот'))) {
+            return '⚙️ Solver аналізує HTML-код сторінки тесту, знаходить мітки правильних відповідей (data-correct, classList) та підсвічує їх. Все працює локально в браузері.';
+        }
+        if (l.includes('безпечн')  l.includes('помітя')  l.includes('вчитель')) {
+            return '🔒 Три крапки виглядають як елемент браузера. Натисни Esc — все сховається. Підсвітка — тонка ледь видима рамка. Вчитель нічого не помітить.';
+        }
+        if (l.includes('столиц')) return '🏛️ Столиця України — <b>Київ</b>';
+        if (l.includes('h2o') || l.includes('вод')) return '💧 H₂O — хімічна формула <b>води</b>';
+        if (l.includes('піфагор')) return '📐 Теорема Піфагора: <b>a² + b² = c²</b>';
+        if (l.includes('фотосинтез')) return '🌿 Фотосинтез: 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂ (під дією світла)';
+        if (l.includes('мітоз')) return '🧬 Мітоз — поділ клітини → 2 ідентичні дочірні клітини (профаза → метафаза → анафаза → телофаза)';
+        if (l.includes('днк') || l.includes('дезокси')) return '🧬 ДНК — подвійна спіраль, носій генетичної інформації. Нуклеотиди: A-T, G-C';
+
+        // Спроба пошуку відповіді за ключовими словами
+        return '🤔 Спробуй скопіювати <b>точний текст питання</b> з тесту. Поки що порада: увімкни зелену крапку для підсвітки правильних відповідей!';
+    }
+
+    // ==== INJECT HINTS INTO IFRAME ====
+    function injectHints() {
+        try {
+            const doc = frame.contentDocument || frame.contentWindow.document;
+            if (!doc) throw 'no access';
+
+            // Видалити старий стиль якщо є
+            const old = doc.getElementById('__solver_css');
+            if (old) old.remove();
+
+            // CSS підсвітка — дуже тонка, ледь помітна
+            const style = doc.createElement('style');
+            style.id = '__solver_css';
+            style.textContent = 
+                /* Підсвітка правильних відповідей */
+                .answer-option[data-correct="true"],
+                .quiz-answer[data-correct="true"],
+                [data-is-correct="true"],
+                [data-correct="1"],
+                .answer-item.correct,
+                .option.correct {
+                    box-shadow: inset 0 0 0 2px rgba(46,204,113,0.45) !important;
+                }
+
+                /* Мітка — маленька крапка */
+                .answer-option[data-correct="true"]::after,
+                .quiz-answer[data-correct="true"]::after,
+                [data-is-correct="true"]::after,
+                [data-correct="1"]::after {
+                    content: '';
+                    position: absolute;
+                    top: 6px;
+                    right: 6px;
+                    width: 5px;
+                    height: 5px;
+                    background: rgba(46,204,113,0.5);
+                    border-radius: 50%;
+                    pointer-events: none;
+                }
+            ;
+            doc.head.appendChild(style);
+
+            // JS — глибший пошук + перехоплення мережі
+            const script = doc.createElement('script');
+            script.id = '__solver_js';
+            script.textContent = `
+                (function() {
+                    // === Метод 1: Пошук data-correct в DOM ===
+                    function scanDOM() {
+                        const selectors = [
+                            '[data-correct="true"]',
+                            '[data-correct="1"]',
+                            '[data-is-correct="true"]',
+                            '.correct-answer',
+                            '.answer-item.correct'
+                        ];
+                        let found = 0;
+                        selectors.forEach(sel => {
+                            document.querySelectorAll(sel).forEach(el => {
+                            el.style.boxShadow = 'inset 0 0 0 2px rgba(46,204,113,0.45)';
+                                el.style.position = 'relative';
+                                found++;
+                            });
+                        });
+                        return found;
+                    }
+
+                    // === Метод 2: Пошук у Vue/React data ===
